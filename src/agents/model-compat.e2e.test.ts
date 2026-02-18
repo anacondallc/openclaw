@@ -26,7 +26,35 @@ describe("normalizeModelCompat", () => {
     ).toBe(false);
   });
 
-  it("leaves non-zai models untouched", () => {
+  it("forces supportsDeveloperRole off for moonshot models", () => {
+    const model = {
+      ...baseModel(),
+      id: "kimi-k2.5",
+      provider: "moonshot",
+      baseUrl: "https://api.moonshot.ai/v1",
+    };
+    delete (model as { compat?: unknown }).compat;
+    const normalized = normalizeModelCompat(model);
+    expect(
+      (normalized.compat as { supportsDeveloperRole?: boolean } | undefined)?.supportsDeveloperRole,
+    ).toBe(false);
+  });
+
+  it("forces supportsDeveloperRole off for moonshot baseUrl", () => {
+    const model = {
+      ...baseModel(),
+      id: "kimi-k2.5",
+      provider: "custom",
+      baseUrl: "https://api.moonshot.ai/v1",
+    };
+    delete (model as { compat?: unknown }).compat;
+    const normalized = normalizeModelCompat(model);
+    expect(
+      (normalized.compat as { supportsDeveloperRole?: boolean } | undefined)?.supportsDeveloperRole,
+    ).toBe(false);
+  });
+
+  it("leaves non-zai/non-moonshot models untouched", () => {
     const model = {
       ...baseModel(),
       provider: "openai",

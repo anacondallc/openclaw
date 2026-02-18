@@ -39,4 +39,42 @@ describe("resolveTranscriptPolicy", () => {
     expect(policy.sanitizeToolCallIds).toBe(false);
     expect(policy.toolCallIdMode).toBeUndefined();
   });
+
+  it("enables validateAnthropicTurns for Moonshot provider", () => {
+    const policy = resolveTranscriptPolicy({
+      provider: "moonshot",
+      modelId: "kimi-k2.5",
+      modelApi: "openai-completions",
+    });
+    expect(policy.validateAnthropicTurns).toBe(true);
+    expect(policy.validateGeminiTurns).toBe(false);
+  });
+
+  it("enables validateAnthropicTurns for other non-OpenAI openai-completions providers", () => {
+    const policy = resolveTranscriptPolicy({
+      provider: "zai",
+      modelId: "glm-4.7",
+      modelApi: "openai-completions",
+    });
+    expect(policy.validateAnthropicTurns).toBe(true);
+  });
+
+  it("disables validateAnthropicTurns for OpenAI provider", () => {
+    const policy = resolveTranscriptPolicy({
+      provider: "openai",
+      modelId: "gpt-4o",
+      modelApi: "openai-completions",
+    });
+    expect(policy.validateAnthropicTurns).toBe(false);
+  });
+
+  it("disables validateAnthropicTurns for Google provider (uses validateGeminiTurns instead)", () => {
+    const policy = resolveTranscriptPolicy({
+      provider: "google",
+      modelId: "gemini-2.0-flash",
+      modelApi: "google-generative-ai",
+    });
+    expect(policy.validateAnthropicTurns).toBe(false);
+    expect(policy.validateGeminiTurns).toBe(true);
+  });
 });

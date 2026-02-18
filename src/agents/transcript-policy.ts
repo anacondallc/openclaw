@@ -117,7 +117,11 @@ export function resolveTranscriptPolicy(params: {
     normalizeAntigravityThinkingBlocks,
     applyGoogleTurnOrdering: !isOpenAi && isGoogle,
     validateGeminiTurns: !isOpenAi && isGoogle,
-    validateAnthropicTurns: !isOpenAi && isAnthropic,
+    // Most non-OpenAI providers (Moonshot, ZAI, etc.) enforce strict role
+    // alternation.  Merging consecutive user turns is harmless for providers
+    // that don't require it and prevents "roles must alternate" errors for
+    // those that do.
+    validateAnthropicTurns: !isOpenAi && (isAnthropic || !isGoogle),
     allowSyntheticToolResults: !isOpenAi && (isGoogle || isAnthropic),
   };
 }
