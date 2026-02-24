@@ -1,0 +1,52 @@
+You are producing a daily Morning Report.
+
+When the report is complete, use the message tool to send it. You MUST specify these parameters:
+- action: "send"
+- channel: "slack"
+- target: "C0AFKPL6LE4"
+- text: (your full report)
+
+Format using standard Markdown (the system converts it to Slack format automatically). Use **double asterisks** for bold headlines, [short label](url) for links, and bullet lists. No tables. Be thorough but concise.
+
+CRITICAL: Slack unfurls ALL URLs in a message — even URLs inside markdown links [label](url) — generating large unwanted preview cards. To prevent this:
+- For news/HN/Reddit stories: use markdown links [headline](url) (small unfurls are acceptable for these).
+- For everything else (GitHub releases, Polymarket, ClawHub, subreddits, etc.): do NOT include the URL at all. Just report the information as plain text. No links, no URLs.
+
+IMPORTANT: Use web_fetch (HTTP) for News Headlines (section 1), Hacker News (section 2), and Reddit (section 3) — these use RSS/JSON APIs that are faster and more reliable than browser scraping. Use the browser tool (CDP browser) for everything else. If any source fails, include a diagnostic note at the end of the report under a "⚠️ Data Collection Issues" section listing each affected source, the tool used (browser vs web_fetch), and the error message or reason for failure (e.g., "browser service unavailable", "bot detection", "cookie wall", "timeout"). This helps diagnose and fix issues for future runs.
+
+If any source is unreachable, note it briefly in that section and move on.
+
+## 1. News Headlines (top 5)
+Do NOT use the browser for news — use web_fetch to pull RSS feeds instead. Fetch ALL of these feeds:
+- https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml (NYT)
+- https://feeds.a.dj.com/rss/RSSWorldNews.xml (WSJ)
+- https://feeds.washingtonpost.com/rss/national (WaPo)
+- https://feeds.bbci.co.uk/news/rss.xml (BBC)
+- https://feeds.npr.org/1001/rss.xml (NPR)
+- https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en (Google News — aggregates Reuters, AP, etc.)
+
+Parse the XML to extract headlines from all feeds. Identify the top 5 most significant stories by looking for topics that appear across multiple feeds. For each, use web_search to get additional context, then write: **bold headline** as a markdown link [headline](article url), source tags showing which outlets covered it, and one sentence on why it matters.
+
+## 2. Hacker News (top 5)
+Do NOT use the browser for HN. Instead, use web_fetch to GET https://hnrss.org/frontpage?count=10 — this returns an RSS feed of the current front page with titles, URLs, authors, and comment links. Pick the top 5 stories. For each: **bold title** as a markdown link [title](url), author, and why notable.
+
+## 3. Reddit Trending (top 5)
+Do NOT use the browser for Reddit — it will hit a CAPTCHA. Instead, use web_fetch to GET https://www.reddit.com/r/popular/hot.json?limit=10 (set a User-Agent header like "OpenClaw/1.0"). Parse the JSON response: posts are in data.children[].data. For each of the top 5 by score: **bold title** as a markdown link [title](permalink), subreddit name as plain text (do NOT link to the subreddit), score, and significance.
+
+## 4. Google Trends (top 5)
+Visit https://trends.google.com/trending?geo=US&hours=24. Top 5 trending searches in the US over the last 24 hours. For each trend, use web_search to look up what actually happened, then write: the trending query, search volume if shown, and a **specific** one-sentence explanation of the underlying event. Do NOT write vague filler like "trending after recent news" — always state what the news is (e.g., "Actor Robert Carradine died at age 68" not "Trending after recent news involving the actor").
+
+## 5. Crypto (BTC, ETH, SOL)
+Visit https://www.coingecko.com/. For each: current price, 24h change %, one-line trend.
+
+## 6. OpenClaw Updates
+Visit https://github.com/openclaw/openclaw/releases. Any releases in last 24h? If yes, state the version number and summarize the key changes as plain text. Do NOT include any GitHub URL in the output — Slack will unfurl it into a large preview card. If no, say 'No new releases.'
+
+## 7. OpenClaw Skills
+Visit https://clawhub.ai/. Any new skills added in the last 24h? If yes, list with brief description and a markdown link [skill name](url). Do NOT include bare URLs. If unavailable or none, just say "No new skills" with no links.
+
+## 8. Clarity Act Odds
+Visit https://polymarket.com/event/clarity-act-signed-into-law-in-2026. The odds percentage is inside a `<number-flow-react>` shadow DOM element. To extract it, run this JavaScript in the browser console: `document.querySelector('number-flow-react')?.shadowRoot?.querySelector('.number')?.style.getPropertyValue('--width')` or read the `--current` CSS property from each `.digit` span inside the shadow root to reconstruct the number. Report the current "% chance" and brief state. Do NOT include any Polymarket URL in the output — just report the number as plain text. If unavailable, skip.
+
+## 9. Report Cost
+Estimate cost in USD (tokens used, approximate cost).
